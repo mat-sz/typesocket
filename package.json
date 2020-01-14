@@ -1,0 +1,30 @@
+{
+  "name": "typesocket",
+  "version": "0.0.1",
+  "description": "TypeScript WebSockets library",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "keywords": [
+    "websockets",
+    "library",
+    "typescript"
+  ],
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mat-sz/typesocket.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mat-sz/typesocket/issues"
+  },
+  "homepage": "https://github.com/mat-sz/typesocket",
+  "author": "Mat Sz <contact@matsz.dev>",
+  "license": "BSD-3-Clause-Clear",
+  "private": false,
+  "devDependencies": {
+    "typescript": "^3.7.4"
+  }
+}
