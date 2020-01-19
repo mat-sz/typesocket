@@ -1,3 +1,9 @@
+export interface TypeSocketOptions {
+    maxRetries?: number,
+    retryOnClose?: boolean,
+    retryTime?: number,
+};
+
 export class TypeSocket<T> {
     onConnected?: () => void;
     onDisconnected?: () => void;
@@ -5,13 +11,25 @@ export class TypeSocket<T> {
     onMessage?: (message: T) => void;
     private socket: WebSocket | null = null;
     private retries = 0;
+    private options: TypeSocketOptions = {
+        maxRetries: 5,
+        retryOnClose: false,
+        retryTime: 500,
+    };
 
     /**
      * Creates a new TypeSocket
      * @param url WebSocket server URL
      */
-    constructor(private url: string) {
+    constructor(private url: string, options?: TypeSocketOptions) {
         this.connect();
+
+        if (options) {
+            this.options = {
+                ...this.options,
+                ...options,
+            };
+        }
     }
 
     /**
@@ -35,10 +53,10 @@ export class TypeSocket<T> {
             this.disconnected();
             this.socket = null;
 
-            if (e.code === 1000) {
+            if (e.code === 1000 || this.options.retryOnClose) {
                 setTimeout(() => {
                     this.reconnect();
-                }, 500);
+                }, this.options.retryTime);
             } else {
                 this.permanentlyDisconnected();
             }
@@ -54,7 +72,7 @@ export class TypeSocket<T> {
 
             setTimeout(() => {
                 this.reconnect();
-            }, 500);
+            }, this.options.retryTime);
         };
     }
 
@@ -78,7 +96,7 @@ export class TypeSocket<T> {
     private reconnect() {
         this.retries++;
 
-        if (this.retries > 5) {
+        if (this.options.maxRetries && this.retries > this.options.maxRetries) {
             this.disconnected();
             this.permanentlyDisconnected();
             return;
