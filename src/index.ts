@@ -50,14 +50,10 @@ export class TypeSocket<T> {
         };
 
         this.socket.onclose = (e) => {
-            this.disconnected();
-            this.socket = null;
-
-            if (e.code === 1000 || this.options.retryOnClose) {
-                setTimeout(() => {
-                    this.reconnect();
-                }, this.options.retryTime);
+            if (e.code === 1000 || (this.options.retryOnClose && this.socket)) {
+                this.reconnectAfterTime(this.options.retryTime);
             } else {
+                this.disconnected();
                 this.permanentlyDisconnected();
             }
         };
@@ -70,9 +66,7 @@ export class TypeSocket<T> {
             this.disconnected();
             this.socket = null;
 
-            setTimeout(() => {
-                this.reconnect();
-            }, this.options.retryTime);
+            this.reconnectAfterTime(this.options.retryTime);
         };
     }
 
@@ -91,6 +85,19 @@ export class TypeSocket<T> {
      */
     get readyState() {
         return this.socket ? this.socket.readyState : 0;
+    }
+
+    private reconnectAfterTime(time = 500) {
+        if (this.socket) {
+            this.socket.close();
+        }
+
+        this.socket = null;
+        this.disconnected();
+
+        setTimeout(() => {
+            this.reconnect();
+        }, time);
     }
 
     private reconnect() {
