@@ -1,6 +1,6 @@
 {
   "name": "typesocket",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "TypeScript WebSockets library",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
