@@ -93,8 +93,6 @@ export class TypeSocket<T> {
      * @param url WebSocket server URL
      */
     constructor(private url: string, options?: TypeSocketOptions) {
-        this.connect();
-
         if (options) {
             this.options = {
                 ...this.options,
