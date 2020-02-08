@@ -23,6 +23,17 @@ export interface TypeSocketOptions {
     retryTime?: number,
 };
 
+type TypeSocketEventType = 'connected' | 'disconnected' | 'permanentlyDisconnected' | 'message';
+type TypeSocketConnectionStateChangeEventListener<T> = (this: TypeSocket<T>) => void;
+type TypeSocketMessageEventListener<T> = (this: TypeSocket<T>, message: T) => void;
+
+interface TypeSocketEvents<T> {
+    connected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
+    disconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
+    permanentlyDisconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
+    message: Set<TypeSocketMessageEventListener<T>>,
+};
+
 /**
  * TypeSocket class.
  */
@@ -65,6 +76,16 @@ export class TypeSocket<T> {
         maxRetries: 5,
         retryOnClose: false,
         retryTime: 500,
+    };
+
+    /**
+     * Events
+     */
+    private events: TypeSocketEvents<T> = {
+        connected: new Set(),
+        disconnected: new Set(),
+        permanentlyDisconnected: new Set(),
+        message: new Set(),
     };
 
     /**
@@ -137,6 +158,59 @@ export class TypeSocket<T> {
         return this.socket ? this.socket.readyState : 0;
     }
 
+    /**
+     * Adds a listener for a message event.
+     * @param eventType Event type. (message)
+     * @param listener Listener function.
+     */
+    on(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
+
+    /**
+     * Adds a listener for a connection event.
+     * @param eventType Event type. (connected, disconnected, permanentlyDisconnected)
+     * @param listener Listener function.
+     */
+    on(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: TypeSocketConnectionStateChangeEventListener<T>): void;
+    
+    /**
+     * Adds a listener for a given event.
+     * @param eventType Event type.
+     * @param listener Listener function.
+     */
+    on(eventType: TypeSocketEventType, listener: Function) {
+        this.events[eventType].add(listener as any);
+    }
+
+    /**
+     * Emits an event.
+     * @param eventType Event type.
+     */
+    private emit(eventType: TypeSocketEventType, ...args: any[]) {
+        for (let listener of this.events[eventType]) {
+            (listener as Function).apply(this, args);
+        }
+
+        let listenerProperty: Function | null | undefined = null;
+        switch (eventType) {
+            case 'message':
+                listenerProperty = this.onMessage;
+                break;
+            case 'connected':
+                listenerProperty = this.onConnected;
+                break;
+            case 'disconnected':
+                listenerProperty = this.onDisconnected;
+                break;
+            case 'permanentlyDisconnected':
+                listenerProperty = this.onPermanentlyDisconnected;
+                break;
+        }
+
+        if (listenerProperty) {
+            listenerProperty.apply(this, args);
+        }
+    }
+
     private reconnectAfterTime(time = 500) {
         if (this.socket) {
             this.socket.close();
@@ -165,28 +239,22 @@ export class TypeSocket<T> {
     private connected() {
         this.retries = 0;
 
-        if (this.onConnected) {
-            this.onConnected();
-        }
+        this.emit('connected');
     }
 
     private disconnected() {
-        if (this.onDisconnected) {
-            this.onDisconnected();
-        }
+        this.emit('disconnected');
     }
 
     private permanentlyDisconnected() {
-        if (this.onPermanentlyDisconnected) {
-            this.onPermanentlyDisconnected();
-        }
+        this.emit('permanentlyDisconnected');
     }
 
     private message(data: string) {
         try {
             const json = JSON.parse(data);
-            if (json && this.onMessage) {
-                this.onMessage(json);
+            if (json) {
+                this.emit('message', json);
             }
         } catch { }
     }

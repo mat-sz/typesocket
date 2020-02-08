@@ -4,6 +4,8 @@
         "module": "commonjs",
         "declaration": true,
         "outDir": "./lib",
+        "lib": [ "es6", "dom" ],
+        "downlevelIteration": true,
         "strict": true
     },
     "include": ["src"],
