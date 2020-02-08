@@ -23,15 +23,19 @@ export interface TypeSocketOptions {
     retryTime?: number,
 };
 
-type TypeSocketEventType = 'connected' | 'disconnected' | 'permanentlyDisconnected' | 'message';
+type WebSocketData = string | ArrayBuffer | Blob | ArrayBufferView;
+
+type TypeSocketEventType = 'connected' | 'disconnected' | 'permanentlyDisconnected' | 'message' | 'rawMessage';
 type TypeSocketConnectionStateChangeEventListener<T> = (this: TypeSocket<T>) => void;
 type TypeSocketMessageEventListener<T> = (this: TypeSocket<T>, message: T) => void;
+type TypeSocketRawMessageEventListener<T> = (this: TypeSocket<T>, message: WebSocketData) => void;
 
 interface TypeSocketEvents<T> {
     connected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
     disconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
     permanentlyDisconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
     message: Set<TypeSocketMessageEventListener<T>>,
+    rawMessage: Set<TypeSocketRawMessageEventListener<T>>,
 };
 
 /**
@@ -54,10 +58,16 @@ export class TypeSocket<T> {
     onPermanentlyDisconnected?: () => void;
 
     /**
-     * Function that is called when the message is received.
-     * @param {T} message 
+     * Function that is called when a valid message is received.
+     * @param message 
      */
     onMessage?: (message: T) => void;
+
+    /**
+     * Function that is called when any message is received.
+     * @param message 
+     */
+    onRawMessage?: (message: WebSocketData) => void;
 
     /**
      * The WebSocket
@@ -86,6 +96,7 @@ export class TypeSocket<T> {
         disconnected: new Set(),
         permanentlyDisconnected: new Set(),
         message: new Set(),
+        rawMessage: new Set(),
     };
 
     /**
@@ -153,7 +164,7 @@ export class TypeSocket<T> {
      * Sends raw data over the socket.
      * @param data Raw data.
      */
-    sendRaw(data: string | ArrayBuffer | Blob | ArrayBufferView) {
+    sendRaw(data: WebSocketData) {
         if (!this.socket) return;
 
         this.socket.send(data);
@@ -172,6 +183,13 @@ export class TypeSocket<T> {
      * @param listener Listener function.
      */
     on(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
+
+    /**
+     * Adds a listener for a raw message event.
+     * @param eventType Event type. (message)
+     * @param listener Listener function.
+     */
+    on(eventType: 'rawMessage', listener: TypeSocketRawMessageEventListener<T>): void;
 
     /**
      * Adds a listener for a connection event.
@@ -195,6 +213,13 @@ export class TypeSocket<T> {
      * @param listener Listener function.
      */
     off(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
+
+    /**
+     * Removes a listener for a raw message event.
+     * @param eventType Event type. (message)
+     * @param listener Listener function.
+     */
+    off(eventType: 'rawMessage', listener: TypeSocketRawMessageEventListener<T>): void;
 
     /**
      * Removes a listener for a connection event.
@@ -225,6 +250,9 @@ export class TypeSocket<T> {
         switch (eventType) {
             case 'message':
                 listenerProperty = this.onMessage;
+                break;
+            case 'rawMessage':
+                listenerProperty = this.onRawMessage;
                 break;
             case 'connected':
                 listenerProperty = this.onConnected;
@@ -281,12 +309,16 @@ export class TypeSocket<T> {
         this.emit('permanentlyDisconnected');
     }
 
-    private message(data: string) {
-        try {
-            const json = JSON.parse(data);
-            if (json) {
-                this.emit('message', json);
-            }
-        } catch { }
+    private message(data: WebSocketData) {
+        this.emit('rawMessage', data);
+
+        if (typeof data === 'string') {
+            try {
+                const json = JSON.parse(data);
+                if (json) {
+                    this.emit('message', json);
+                }
+            } catch { }
+        }
     }
 };
