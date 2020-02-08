@@ -74,6 +74,7 @@ export const socketMiddleware = (url: string) => {
     constructor(private url: string, options?: TypeSocketOptions);
     connect();
     send(data: T);
+    sendRaw(data: string | ArrayBuffer | Blob | ArrayBufferView);
     get readyState();
 ```
 

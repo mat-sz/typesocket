@@ -150,6 +150,16 @@ export class TypeSocket<T> {
     }
 
     /**
+     * Sends raw data over the socket.
+     * @param data Raw data.
+     */
+    sendRaw(data: string | ArrayBuffer | Blob | ArrayBufferView) {
+        if (!this.socket) return;
+
+        this.socket.send(data);
+    }
+
+    /**
      * Ready state of the socket.
      */
     get readyState() {
