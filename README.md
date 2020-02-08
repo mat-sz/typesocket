@@ -15,6 +15,10 @@ const socket = new TypeSocket<MessageModel>(url, {
 
 socket.on('connected', () => {
     console.log('connected!');
+
+    socket.send({
+        type: 'ping',
+    });
 });
 
 socket.on('message', (message: MessageModel) => {
@@ -23,10 +27,6 @@ socket.on('message', (message: MessageModel) => {
 
 socket.on('disconnected', () => {
     console.log('disconnected');
-});
-
-socket.send({
-    type: 'ping',
 });
 
 socket.connect();
