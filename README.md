@@ -64,14 +64,15 @@ export const socketMiddleware = (url: string) => {
     onDisconnected?: () => void;
     onPermanentlyDisconnected?: () => void;
     onMessage?: (message: T) => void;
+    onInvalidMessage?: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void;
     onRawMessage?: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void;
 
     on(eventType: 'message', listener: (message: T) => void);
-    on(eventType: 'rawMessage', listener: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void);
+    on(eventType: 'rawMessage' | 'invalidMessage', listener: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void);
     on(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: () => void);
 
     off(eventType: 'message', listener: (message: T) => void);
-    off(eventType: 'rawMessage', listener: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void);
+    off(eventType: 'rawMessage' | 'invalidMessage', listener: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void);
     off(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: () => void);
 
     constructor(private url: string, options?: TypeSocketOptions);
@@ -100,6 +101,10 @@ A property that contains a function that will get called when the socket is perm
 ### onMessage
 
 A property that contains a function that will get called when a valid message is received.
+
+### onInvalidMessage
+
+A property that contains a function that will get called when an invalid message is received.
 
 ### onRawMessage
 

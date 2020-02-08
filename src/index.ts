@@ -25,7 +25,7 @@ export interface TypeSocketOptions {
 
 type WebSocketData = string | ArrayBuffer | Blob | ArrayBufferView;
 
-type TypeSocketEventType = 'connected' | 'disconnected' | 'permanentlyDisconnected' | 'message' | 'rawMessage';
+type TypeSocketEventType = 'connected' | 'disconnected' | 'permanentlyDisconnected' | 'message' | 'invalidMessage' | 'rawMessage';
 type TypeSocketConnectionStateChangeEventListener<T> = (this: TypeSocket<T>) => void;
 type TypeSocketMessageEventListener<T> = (this: TypeSocket<T>, message: T) => void;
 type TypeSocketRawMessageEventListener<T> = (this: TypeSocket<T>, message: WebSocketData) => void;
@@ -35,6 +35,7 @@ interface TypeSocketEvents<T> {
     disconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
     permanentlyDisconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
     message: Set<TypeSocketMessageEventListener<T>>,
+    invalidMessage: Set<TypeSocketRawMessageEventListener<T>>,
     rawMessage: Set<TypeSocketRawMessageEventListener<T>>,
 };
 
@@ -62,6 +63,12 @@ export class TypeSocket<T> {
      * @param message 
      */
     onMessage?: (message: T) => void;
+
+    /**
+     * Function that is called when an invalid message is received.
+     * @param message 
+     */
+    onInvalidMessage?: (message: WebSocketData) => void;
 
     /**
      * Function that is called when any message is received.
@@ -96,6 +103,7 @@ export class TypeSocket<T> {
         disconnected: new Set(),
         permanentlyDisconnected: new Set(),
         message: new Set(),
+        invalidMessage: new Set(),
         rawMessage: new Set(),
     };
 
@@ -185,11 +193,11 @@ export class TypeSocket<T> {
     on(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
 
     /**
-     * Adds a listener for a raw message event.
+     * Adds a listener for a raw/invalid message event.
      * @param eventType Event type. (message)
      * @param listener Listener function.
      */
-    on(eventType: 'rawMessage', listener: TypeSocketRawMessageEventListener<T>): void;
+    on(eventType: 'rawMessage' | 'invalidMessage', listener: TypeSocketRawMessageEventListener<T>): void;
 
     /**
      * Adds a listener for a connection event.
@@ -215,11 +223,11 @@ export class TypeSocket<T> {
     off(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
 
     /**
-     * Removes a listener for a raw message event.
+     * Removes a listener for a raw/invalid message event.
      * @param eventType Event type. (message)
      * @param listener Listener function.
      */
-    off(eventType: 'rawMessage', listener: TypeSocketRawMessageEventListener<T>): void;
+    off(eventType: 'rawMessage' | 'invalidMessage', listener: TypeSocketRawMessageEventListener<T>): void;
 
     /**
      * Removes a listener for a connection event.
@@ -250,6 +258,9 @@ export class TypeSocket<T> {
         switch (eventType) {
             case 'message':
                 listenerProperty = this.onMessage;
+                break;
+            case 'invalidMessage':
+                listenerProperty = this.onInvalidMessage;
                 break;
             case 'rawMessage':
                 listenerProperty = this.onRawMessage;
@@ -317,8 +328,11 @@ export class TypeSocket<T> {
                 const json = JSON.parse(data);
                 if (json) {
                     this.emit('message', json);
+                    return;
                 }
             } catch { }
         }
+
+        this.emit('invalidMessage', data);
     }
 };
