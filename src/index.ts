@@ -180,6 +180,29 @@ export class TypeSocket<T> {
     }
 
     /**
+     * Removes a listener for a message event.
+     * @param eventType Event type. (message)
+     * @param listener Listener function.
+     */
+    off(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
+
+    /**
+     * Removes a listener for a connection event.
+     * @param eventType Event type. (connected, disconnected, permanentlyDisconnected)
+     * @param listener Listener function.
+     */
+    off(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: TypeSocketConnectionStateChangeEventListener<T>): void;
+    
+    /**
+     * Removes a listener for a given event.
+     * @param eventType Event type.
+     * @param listener Listener function.
+     */
+    off(eventType: TypeSocketEventType, listener: Function) {
+        this.events[eventType].delete(listener as any);
+    }
+
+    /**
      * Emits an event.
      * @param eventType Event type.
      */

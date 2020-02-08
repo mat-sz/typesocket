@@ -68,6 +68,9 @@ export const socketMiddleware = (url: string) => {
     on(eventType: 'message', listener: () => void);
     on(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: (message: T) => void);
 
+    off(eventType: 'message', listener: () => void);
+    off(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: (message: T) => void);
+
     constructor(private url: string, options?: TypeSocketOptions);
     connect();
     send(data: T);
