@@ -2,9 +2,9 @@
 
 TypeScript WebSocket wrapper with disconnection handling and JSON parsing.
 
-Used in [filedrop-web](https://github.com/mat-sz/filedrop-web).
+Used in [filedrop-web](https://github.com/mat-sz/filedrop-web) and [whiteboard-web](https://github.com/mat-sz/whiteboard-web).
 
-API is not stable yet and may change.
+API is **mostly** stable. It may change in the future, but the changes shouldn't be breaking.
 
 ## Example usage
 
@@ -59,7 +59,7 @@ export const socketMiddleware = (url: string) => {
 
 ## Events
 
-You can attach event listener to an instance of `TypeSocket` with `.on`:
+You can attach event listeners to an instance of `TypeSocket` with `.on`:
 
 ```ts
 socket.on('message', (message) => {
@@ -85,19 +85,19 @@ Emitted when the socket is permanently disconnected, for example:
 
 ### message
 
-Emitted when a valid message is received.
+Emitted when a **valid** message is received.
 
 The only argument contains an object of type `T` with a deserialized message.
 
 ### invalidMessage
 
-Emitted when an invalid message is received.
+Emitted when an **invalid** message is received.
 
 The only argument contains an object of type `string | ArrayBuffer | Blob | ArrayBufferView` with a raw message.
 
 ### rawMessage
 
-Emitted when any message is received.
+Emitted when **any** message is received.
 
 The only argument contains an object of type `string | ArrayBuffer | Blob | ArrayBufferView` with a raw message.
 
