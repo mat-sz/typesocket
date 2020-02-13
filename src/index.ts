@@ -159,6 +159,21 @@ export class TypeSocket<T> {
     }
 
     /**
+     * Disconnects the connection.
+     */
+    disconnect() {
+        if (this.socket) {
+            try {
+                this.socket.onclose = null;
+                this.socket.onerror = null;
+                this.socket.close();
+                this.disconnected();
+                this.permanentlyDisconnected();
+            } catch { }
+        }
+    }
+
+    /**
      * Sends a JavaScript object of type T to the server.
      * @param data JS object.
      */

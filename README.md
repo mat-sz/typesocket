@@ -81,6 +81,7 @@ Emitted when the socket is permanently disconnected, for example:
 
 * Server gracefully closes the connection.
 * Client gracefully closes the connection.
+* `disconnect` is called.
 * Retry amount has been exceeded.
 
 ### message
@@ -121,6 +122,7 @@ off(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listene
 
 constructor(private url: string, options?: TypeSocketOptions);
 connect();
+disconnect();
 send(data: T);
 sendRaw(data: string | ArrayBuffer | Blob | ArrayBufferView);
 get readyState();
