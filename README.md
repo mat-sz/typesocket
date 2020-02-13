@@ -57,6 +57,50 @@ export const socketMiddleware = (url: string) => {
 };
 ```
 
+## Events
+
+You can attach event listener to an instance of `TypeSocket` with `.on`:
+
+```ts
+socket.on('message', (message) => {
+    console.log(message);
+});
+```
+
+### connected
+
+Emitted when a connection gets established.
+
+### disconnected
+
+Emitted when the socket is disconnected.
+
+### permanentlyDisconnected
+
+Emitted when the socket is permanently disconnected, for example:
+
+* Server gracefully closes the connection.
+* Client gracefully closes the connection.
+* Retry amount has been exceeded.
+
+### message
+
+Emitted when a valid message is received.
+
+The only argument contains an object of type `T` with a deserialized message.
+
+### invalidMessage
+
+Emitted when an invalid message is received.
+
+The only argument contains an object of type `string | ArrayBuffer | Blob | ArrayBufferView` with a raw message.
+
+### rawMessage
+
+Emitted when any message is received.
+
+The only argument contains an object of type `string | ArrayBuffer | Blob | ArrayBufferView` with a raw message.
+
 ## API
 
 ```
@@ -81,31 +125,3 @@ send(data: T);
 sendRaw(data: string | ArrayBuffer | Blob | ArrayBufferView);
 get readyState();
 ```
-
-### onConnected
-
-A property that contains a function that will get called when a connection gets established.
-
-### onDisconnected
-
-A property that contains a function that will get called when the socket is disconnected.
-
-### onPermanentlyDisconnected
-
-A property that contains a function that will get called when the socket is permanently disconnected, that is:
-
-* Server gracefully closes the connection.
-* Client gracefully closes the connection.
-* Retry amount has been exceeded.
-
-### onMessage
-
-A property that contains a function that will get called when a valid message is received.
-
-### onInvalidMessage
-
-A property that contains a function that will get called when an invalid message is received.
-
-### onRawMessage
-
-A property that contains a function that will get called when any message is received.
