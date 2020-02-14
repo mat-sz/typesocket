@@ -6,6 +6,16 @@ Used in [filedrop-web](https://github.com/mat-sz/filedrop-web) and [whiteboard-w
 
 API is **mostly** stable. It may change in the future, but the changes shouldn't be breaking.
 
+## Installation
+
+TypeSocket is available on [npm](https://www.npmjs.com/package/typesocket), you can install it with either npm or yarn:
+
+```sh
+npm install typesocket
+# or:
+yarn install typesocket
+```
+
 ## Example usage
 
 ```ts
