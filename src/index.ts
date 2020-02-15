@@ -39,9 +39,6 @@ interface TypeSocketEvents<T> {
     rawMessage: Set<TypeSocketRawMessageEventListener<T>>,
 };
 
-/**
- * TypeSocket class.
- */
 export class TypeSocket<T> {
     /**
      * Function that is called when a connection is successfully established.
@@ -76,28 +73,16 @@ export class TypeSocket<T> {
      */
     onRawMessage?: (message: WebSocketData) => void;
 
-    /**
-     * The WebSocket
-     */
     private socket: WebSocket | null = null;
 
-    /**
-     * Temporary retry counter.
-     */
     private retries = 0;
 
-    /**
-     * Instance options.
-     */
     private options: TypeSocketOptions = {
         maxRetries: 5,
         retryOnClose: false,
         retryTime: 500,
     };
 
-    /**
-     * Events
-     */
     private events: TypeSocketEvents<T> = {
         connected: new Set(),
         disconnected: new Set(),
@@ -122,6 +107,8 @@ export class TypeSocket<T> {
 
     /**
      * Connects to the server.
+     * 
+     * Will automatically retry on failure.
      */
     connect() {
         if (this.socket) {
@@ -160,6 +147,8 @@ export class TypeSocket<T> {
 
     /**
      * Disconnects the connection.
+     * 
+     * When called, TypeSocket will stop retrying, the WebSocket will be closed and both disconnected and permanentlyDisconnected events will be called.
      */
     disconnect() {
         if (this.socket) {
@@ -260,10 +249,6 @@ export class TypeSocket<T> {
         this.events[eventType].delete(listener as any);
     }
 
-    /**
-     * Emits an event.
-     * @param eventType Event type.
-     */
     private emit(eventType: TypeSocketEventType, ...args: any[]) {
         for (let listener of this.events[eventType]) {
             (listener as Function).apply(this, args);
