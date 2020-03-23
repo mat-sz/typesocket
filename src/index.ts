@@ -25,7 +25,6 @@ export interface TypeSocketOptions {
 
 type WebSocketData = string | ArrayBuffer | Blob | ArrayBufferView;
 
-type TypeSocketEventType = 'connected' | 'disconnected' | 'permanentlyDisconnected' | 'message' | 'invalidMessage' | 'rawMessage';
 type TypeSocketConnectionStateChangeEventListener<T> = (this: TypeSocket<T>) => void;
 type TypeSocketMessageEventListener<T> = (this: TypeSocket<T>, message: T) => void;
 type TypeSocketRawMessageEventListener<T> = (this: TypeSocket<T>, message: WebSocketData) => void;
@@ -215,7 +214,7 @@ export class TypeSocket<T> {
      * @param eventType Event type.
      * @param listener Listener function.
      */
-    on(eventType: TypeSocketEventType, listener: Function) {
+    on(eventType: keyof TypeSocketEvents<T>, listener: Function) {
         this.events[eventType].add(listener as any);
     }
 
@@ -245,11 +244,11 @@ export class TypeSocket<T> {
      * @param eventType Event type.
      * @param listener Listener function.
      */
-    off(eventType: TypeSocketEventType, listener: Function) {
+    off(eventType: keyof TypeSocketEvents<T>, listener: Function) {
         this.events[eventType].delete(listener as any);
     }
 
-    private emit(eventType: TypeSocketEventType, ...args: any[]) {
+    private emit(eventType: keyof TypeSocketEvents<T>, ...args: any[]) {
         for (let listener of this.events[eventType]) {
             (listener as Function).apply(this, args);
         }
