@@ -47,39 +47,6 @@ interface TypeSocketEvents<T> {
 }
 
 export class TypeSocket<T> {
-  /**
-   * Function that is called when a connection is successfully established.
-   */
-  onConnected?: () => void;
-
-  /**
-   * Function that is called when the socket is disconnected.
-   */
-  onDisconnected?: () => void;
-
-  /**
-   * Function that is called when the socket is permanently disconnected (after running out of retries or being manually disconnected).
-   */
-  onPermanentlyDisconnected?: () => void;
-
-  /**
-   * Function that is called when a valid message is received.
-   * @param message
-   */
-  onMessage?: (message: T) => void;
-
-  /**
-   * Function that is called when an invalid message is received.
-   * @param message
-   */
-  onInvalidMessage?: (message: WebSocketData) => void;
-
-  /**
-   * Function that is called when any message is received.
-   * @param message
-   */
-  onRawMessage?: (message: WebSocketData) => void;
-
   private socket: WebSocket | null = null;
 
   private retries = 0;
@@ -271,32 +238,6 @@ export class TypeSocket<T> {
   private emit(eventType: keyof TypeSocketEvents<T>, ...args: any[]) {
     for (let listener of this.events[eventType]) {
       (listener as Function).apply(this, args);
-    }
-
-    let listenerProperty: Function | null | undefined = null;
-    switch (eventType) {
-      case 'message':
-        listenerProperty = this.onMessage;
-        break;
-      case 'invalidMessage':
-        listenerProperty = this.onInvalidMessage;
-        break;
-      case 'rawMessage':
-        listenerProperty = this.onRawMessage;
-        break;
-      case 'connected':
-        listenerProperty = this.onConnected;
-        break;
-      case 'disconnected':
-        listenerProperty = this.onDisconnected;
-        break;
-      case 'permanentlyDisconnected':
-        listenerProperty = this.onPermanentlyDisconnected;
-        break;
-    }
-
-    if (listenerProperty) {
-      listenerProperty.apply(this, args);
     }
   }
 
