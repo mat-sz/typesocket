@@ -3,335 +3,355 @@
  * @interface
  */
 export interface TypeSocketOptions {
-    /**
-     * Maximum amount of retries until a successful connection gets established.
-     * Set to 0 to keep retrying forever.
-     * Default: 5
-     */
-    maxRetries?: number,
-    
-    /**
-     * When set to true the client will try to reconnect when the socket is intentionally closed by either party.
-     * Default: false
-     */
-    retryOnClose?: boolean,
+  /**
+   * Maximum amount of retries until a successful connection gets established.
+   * Set to 0 to keep retrying forever.
+   * Default: 5
+   */
+  maxRetries?: number;
 
-    /**
-     * Time between retries. (ms)
-     * Default: 500
-     */
-    retryTime?: number,
-};
+  /**
+   * When set to true the client will try to reconnect when the socket is intentionally closed by either party.
+   * Default: false
+   */
+  retryOnClose?: boolean;
+
+  /**
+   * Time between retries. (ms)
+   * Default: 500
+   */
+  retryTime?: number;
+}
 
 type WebSocketData = string | ArrayBuffer | Blob | ArrayBufferView;
 
-type TypeSocketConnectionStateChangeEventListener<T> = (this: TypeSocket<T>) => void;
-type TypeSocketMessageEventListener<T> = (this: TypeSocket<T>, message: T) => void;
-type TypeSocketRawMessageEventListener<T> = (this: TypeSocket<T>, message: WebSocketData) => void;
+type TypeSocketConnectionStateChangeEventListener<T> = (
+  this: TypeSocket<T>
+) => void;
+type TypeSocketMessageEventListener<T> = (
+  this: TypeSocket<T>,
+  message: T
+) => void;
+type TypeSocketRawMessageEventListener<T> = (
+  this: TypeSocket<T>,
+  message: WebSocketData
+) => void;
 
 interface TypeSocketEvents<T> {
-    connected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
-    disconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
-    permanentlyDisconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>,
-    message: Set<TypeSocketMessageEventListener<T>>,
-    invalidMessage: Set<TypeSocketRawMessageEventListener<T>>,
-    rawMessage: Set<TypeSocketRawMessageEventListener<T>>,
-};
+  connected: Set<TypeSocketConnectionStateChangeEventListener<T>>;
+  disconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>;
+  permanentlyDisconnected: Set<TypeSocketConnectionStateChangeEventListener<T>>;
+  message: Set<TypeSocketMessageEventListener<T>>;
+  invalidMessage: Set<TypeSocketRawMessageEventListener<T>>;
+  rawMessage: Set<TypeSocketRawMessageEventListener<T>>;
+}
 
 export class TypeSocket<T> {
-    /**
-     * Function that is called when a connection is successfully established.
-     */
-    onConnected?: () => void;
+  /**
+   * Function that is called when a connection is successfully established.
+   */
+  onConnected?: () => void;
 
-    /**
-     * Function that is called when the socket is disconnected.
-     */
-    onDisconnected?: () => void;
+  /**
+   * Function that is called when the socket is disconnected.
+   */
+  onDisconnected?: () => void;
 
-    /**
-     * Function that is called when the socket is permanently disconnected (after running out of retries or being manually disconnected).
-     */
-    onPermanentlyDisconnected?: () => void;
+  /**
+   * Function that is called when the socket is permanently disconnected (after running out of retries or being manually disconnected).
+   */
+  onPermanentlyDisconnected?: () => void;
 
-    /**
-     * Function that is called when a valid message is received.
-     * @param message 
-     */
-    onMessage?: (message: T) => void;
+  /**
+   * Function that is called when a valid message is received.
+   * @param message
+   */
+  onMessage?: (message: T) => void;
 
-    /**
-     * Function that is called when an invalid message is received.
-     * @param message 
-     */
-    onInvalidMessage?: (message: WebSocketData) => void;
+  /**
+   * Function that is called when an invalid message is received.
+   * @param message
+   */
+  onInvalidMessage?: (message: WebSocketData) => void;
 
-    /**
-     * Function that is called when any message is received.
-     * @param message 
-     */
-    onRawMessage?: (message: WebSocketData) => void;
+  /**
+   * Function that is called when any message is received.
+   * @param message
+   */
+  onRawMessage?: (message: WebSocketData) => void;
 
-    private socket: WebSocket | null = null;
+  private socket: WebSocket | null = null;
 
-    private retries = 0;
+  private retries = 0;
 
-    private options: TypeSocketOptions = {
-        maxRetries: 5,
-        retryOnClose: false,
-        retryTime: 500,
-    };
+  private options: TypeSocketOptions = {
+    maxRetries: 5,
+    retryOnClose: false,
+    retryTime: 500,
+  };
 
-    private events: TypeSocketEvents<T> = {
-        connected: new Set(),
-        disconnected: new Set(),
-        permanentlyDisconnected: new Set(),
-        message: new Set(),
-        invalidMessage: new Set(),
-        rawMessage: new Set(),
-    };
+  private events: TypeSocketEvents<T> = {
+    connected: new Set(),
+    disconnected: new Set(),
+    permanentlyDisconnected: new Set(),
+    message: new Set(),
+    invalidMessage: new Set(),
+    rawMessage: new Set(),
+  };
 
-    /**
-     * Creates a new TypeSocket
-     * @param url WebSocket server URL
-     */
-    constructor(private url: string, options?: TypeSocketOptions) {
-        if (options) {
-            this.options = {
-                ...this.options,
-                ...options,
-            };
-        }
+  /**
+   * Creates a new TypeSocket
+   * @param url WebSocket server URL
+   */
+  constructor(private url: string, options?: TypeSocketOptions) {
+    if (options) {
+      this.options = {
+        ...this.options,
+        ...options,
+      };
     }
+  }
 
-    /**
-     * Connects to the server.
-     * 
-     * Will automatically retry on failure.
-     */
-    connect() {
-        if (this.socket) {
-            try {
-                this.socket.close();
-                this.disconnected();
-            } catch { }
-        }
-
-        this.socket = new WebSocket(this.url);
-
-        this.socket.onopen = () => {
-            this.connected();
-        };
-
-        this.socket.onclose = (e) => {
-            if (e.code === 1000 || (this.options.retryOnClose && this.socket)) {
-                this.reconnectAfterTime(this.options.retryTime);
-            } else {
-                this.disconnected();
-                this.permanentlyDisconnected();
-            }
-        };
-
-        this.socket.onmessage = (e) => {
-            this.message(e.data);
-        };
-
-        this.socket.onerror = () => {
-            this.disconnected();
-            this.socket = null;
-
-            this.reconnectAfterTime(this.options.retryTime);
-        };
-    }
-
-    /**
-     * Disconnects the connection.
-     * 
-     * When called, TypeSocket will stop retrying, the WebSocket will be closed and both disconnected and permanentlyDisconnected events will be called.
-     */
-    disconnect() {
-        if (this.socket) {
-            try {
-                this.socket.onclose = null;
-                this.socket.onerror = null;
-                this.socket.close();
-                this.disconnected();
-                this.permanentlyDisconnected();
-            } catch { }
-        }
-    }
-
-    /**
-     * Sends a JavaScript object of type T to the server.
-     * @param data JS object.
-     */
-    send(data: T) {
-        if (!this.socket) return;
-
-        this.socket.send(JSON.stringify(data));
-    }
-
-    /**
-     * Sends raw data over the socket.
-     * @param data Raw data.
-     */
-    sendRaw(data: WebSocketData) {
-        if (!this.socket) return;
-
-        this.socket.send(data);
-    }
-
-    /**
-     * Ready state of the socket.
-     */
-    get readyState() {
-        return this.socket ? this.socket.readyState : 0;
-    }
-
-    /**
-     * Adds a listener for a message event.
-     * @param eventType Event type. (message)
-     * @param listener Listener function.
-     */
-    on(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
-
-    /**
-     * Adds a listener for a raw/invalid message event.
-     * @param eventType Event type. (message)
-     * @param listener Listener function.
-     */
-    on(eventType: 'rawMessage' | 'invalidMessage', listener: TypeSocketRawMessageEventListener<T>): void;
-
-    /**
-     * Adds a listener for a connection event.
-     * @param eventType Event type. (connected, disconnected, permanentlyDisconnected)
-     * @param listener Listener function.
-     */
-    on(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: TypeSocketConnectionStateChangeEventListener<T>): void;
-    
-    /**
-     * Adds a listener for a given event.
-     * @param eventType Event type.
-     * @param listener Listener function.
-     */
-    on(eventType: keyof TypeSocketEvents<T>, listener: Function) {
-        this.events[eventType].add(listener as any);
-    }
-
-    /**
-     * Removes a listener for a message event.
-     * @param eventType Event type. (message)
-     * @param listener Listener function.
-     */
-    off(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
-
-    /**
-     * Removes a listener for a raw/invalid message event.
-     * @param eventType Event type. (message)
-     * @param listener Listener function.
-     */
-    off(eventType: 'rawMessage' | 'invalidMessage', listener: TypeSocketRawMessageEventListener<T>): void;
-
-    /**
-     * Removes a listener for a connection event.
-     * @param eventType Event type. (connected, disconnected, permanentlyDisconnected)
-     * @param listener Listener function.
-     */
-    off(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: TypeSocketConnectionStateChangeEventListener<T>): void;
-    
-    /**
-     * Removes a listener for a given event.
-     * @param eventType Event type.
-     * @param listener Listener function.
-     */
-    off(eventType: keyof TypeSocketEvents<T>, listener: Function) {
-        this.events[eventType].delete(listener as any);
-    }
-
-    private emit(eventType: keyof TypeSocketEvents<T>, ...args: any[]) {
-        for (let listener of this.events[eventType]) {
-            (listener as Function).apply(this, args);
-        }
-
-        let listenerProperty: Function | null | undefined = null;
-        switch (eventType) {
-            case 'message':
-                listenerProperty = this.onMessage;
-                break;
-            case 'invalidMessage':
-                listenerProperty = this.onInvalidMessage;
-                break;
-            case 'rawMessage':
-                listenerProperty = this.onRawMessage;
-                break;
-            case 'connected':
-                listenerProperty = this.onConnected;
-                break;
-            case 'disconnected':
-                listenerProperty = this.onDisconnected;
-                break;
-            case 'permanentlyDisconnected':
-                listenerProperty = this.onPermanentlyDisconnected;
-                break;
-        }
-
-        if (listenerProperty) {
-            listenerProperty.apply(this, args);
-        }
-    }
-
-    private reconnectAfterTime(time = 500) {
-        if (this.socket) {
-            this.socket.close();
-        }
-
-        this.socket = null;
+  /**
+   * Connects to the server.
+   *
+   * Will automatically retry on failure.
+   */
+  connect() {
+    if (this.socket) {
+      try {
+        this.socket.close();
         this.disconnected();
-
-        setTimeout(() => {
-            this.reconnect();
-        }, time);
+      } catch {}
     }
 
-    private reconnect() {
-        this.retries++;
+    this.socket = new WebSocket(this.url);
 
-        if (this.options.maxRetries && this.retries > this.options.maxRetries) {
-            this.disconnected();
-            this.permanentlyDisconnected();
-            return;
+    this.socket.onopen = () => {
+      this.connected();
+    };
+
+    this.socket.onclose = e => {
+      if (e.code === 1000 || (this.options.retryOnClose && this.socket)) {
+        this.reconnectAfterTime(this.options.retryTime);
+      } else {
+        this.disconnected();
+        this.permanentlyDisconnected();
+      }
+    };
+
+    this.socket.onmessage = e => {
+      this.message(e.data);
+    };
+
+    this.socket.onerror = () => {
+      this.disconnected();
+      this.socket = null;
+
+      this.reconnectAfterTime(this.options.retryTime);
+    };
+  }
+
+  /**
+   * Disconnects the connection.
+   *
+   * When called, TypeSocket will stop retrying, the WebSocket will be closed and both disconnected and permanentlyDisconnected events will be called.
+   */
+  disconnect() {
+    if (this.socket) {
+      try {
+        this.socket.onclose = null;
+        this.socket.onerror = null;
+        this.socket.close();
+        this.disconnected();
+        this.permanentlyDisconnected();
+      } catch {}
+    }
+  }
+
+  /**
+   * Sends a JavaScript object of type T to the server.
+   * @param data JS object.
+   */
+  send(data: T) {
+    if (!this.socket) return;
+
+    this.socket.send(JSON.stringify(data));
+  }
+
+  /**
+   * Sends raw data over the socket.
+   * @param data Raw data.
+   */
+  sendRaw(data: WebSocketData) {
+    if (!this.socket) return;
+
+    this.socket.send(data);
+  }
+
+  /**
+   * Ready state of the socket.
+   */
+  get readyState() {
+    return this.socket ? this.socket.readyState : 0;
+  }
+
+  /**
+   * Adds a listener for a message event.
+   * @param eventType Event type. (message)
+   * @param listener Listener function.
+   */
+  on(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
+
+  /**
+   * Adds a listener for a raw/invalid message event.
+   * @param eventType Event type. (message)
+   * @param listener Listener function.
+   */
+  on(
+    eventType: 'rawMessage' | 'invalidMessage',
+    listener: TypeSocketRawMessageEventListener<T>
+  ): void;
+
+  /**
+   * Adds a listener for a connection event.
+   * @param eventType Event type. (connected, disconnected, permanentlyDisconnected)
+   * @param listener Listener function.
+   */
+  on(
+    eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected',
+    listener: TypeSocketConnectionStateChangeEventListener<T>
+  ): void;
+
+  /**
+   * Adds a listener for a given event.
+   * @param eventType Event type.
+   * @param listener Listener function.
+   */
+  on(eventType: keyof TypeSocketEvents<T>, listener: Function) {
+    this.events[eventType].add(listener as any);
+  }
+
+  /**
+   * Removes a listener for a message event.
+   * @param eventType Event type. (message)
+   * @param listener Listener function.
+   */
+  off(eventType: 'message', listener: TypeSocketMessageEventListener<T>): void;
+
+  /**
+   * Removes a listener for a raw/invalid message event.
+   * @param eventType Event type. (message)
+   * @param listener Listener function.
+   */
+  off(
+    eventType: 'rawMessage' | 'invalidMessage',
+    listener: TypeSocketRawMessageEventListener<T>
+  ): void;
+
+  /**
+   * Removes a listener for a connection event.
+   * @param eventType Event type. (connected, disconnected, permanentlyDisconnected)
+   * @param listener Listener function.
+   */
+  off(
+    eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected',
+    listener: TypeSocketConnectionStateChangeEventListener<T>
+  ): void;
+
+  /**
+   * Removes a listener for a given event.
+   * @param eventType Event type.
+   * @param listener Listener function.
+   */
+  off(eventType: keyof TypeSocketEvents<T>, listener: Function) {
+    this.events[eventType].delete(listener as any);
+  }
+
+  private emit(eventType: keyof TypeSocketEvents<T>, ...args: any[]) {
+    for (let listener of this.events[eventType]) {
+      (listener as Function).apply(this, args);
+    }
+
+    let listenerProperty: Function | null | undefined = null;
+    switch (eventType) {
+      case 'message':
+        listenerProperty = this.onMessage;
+        break;
+      case 'invalidMessage':
+        listenerProperty = this.onInvalidMessage;
+        break;
+      case 'rawMessage':
+        listenerProperty = this.onRawMessage;
+        break;
+      case 'connected':
+        listenerProperty = this.onConnected;
+        break;
+      case 'disconnected':
+        listenerProperty = this.onDisconnected;
+        break;
+      case 'permanentlyDisconnected':
+        listenerProperty = this.onPermanentlyDisconnected;
+        break;
+    }
+
+    if (listenerProperty) {
+      listenerProperty.apply(this, args);
+    }
+  }
+
+  private reconnectAfterTime(time = 500) {
+    if (this.socket) {
+      this.socket.close();
+    }
+
+    this.socket = null;
+    this.disconnected();
+
+    setTimeout(() => {
+      this.reconnect();
+    }, time);
+  }
+
+  private reconnect() {
+    this.retries++;
+
+    if (this.options.maxRetries && this.retries > this.options.maxRetries) {
+      this.disconnected();
+      this.permanentlyDisconnected();
+      return;
+    }
+
+    this.connect();
+  }
+
+  private connected() {
+    this.retries = 0;
+
+    this.emit('connected');
+  }
+
+  private disconnected() {
+    this.emit('disconnected');
+  }
+
+  private permanentlyDisconnected() {
+    this.emit('permanentlyDisconnected');
+  }
+
+  private message(data: WebSocketData) {
+    this.emit('rawMessage', data);
+
+    if (typeof data === 'string') {
+      try {
+        const json = JSON.parse(data);
+        if (json) {
+          this.emit('message', json);
+          return;
         }
-
-        this.connect();
+      } catch {}
     }
 
-    private connected() {
-        this.retries = 0;
-
-        this.emit('connected');
-    }
-
-    private disconnected() {
-        this.emit('disconnected');
-    }
-
-    private permanentlyDisconnected() {
-        this.emit('permanentlyDisconnected');
-    }
-
-    private message(data: WebSocketData) {
-        this.emit('rawMessage', data);
-
-        if (typeof data === 'string') {
-            try {
-                const json = JSON.parse(data);
-                if (json) {
-                    this.emit('message', json);
-                    return;
-                }
-            } catch { }
-        }
-
-        this.emit('invalidMessage', data);
-    }
-};
+    this.emit('invalidMessage', data);
+  }
+}
