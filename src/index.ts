@@ -84,7 +84,7 @@ export class TypeSocket<T> {
    *
    * Will automatically retry on failure.
    */
-  connect() {
+  connect(): void {
     if (this.socket) {
       try {
         this.socket.close();
@@ -124,7 +124,7 @@ export class TypeSocket<T> {
    *
    * When called, TypeSocket will stop retrying, the WebSocket will be closed and both disconnected and permanentlyDisconnected events will be called.
    */
-  disconnect() {
+  disconnect(): void {
     if (this.socket) {
       try {
         this.socket.onclose = null;
@@ -140,7 +140,7 @@ export class TypeSocket<T> {
    * Sends a JavaScript object of type T to the server.
    * @param data JS object.
    */
-  send(data: T) {
+  send(data: T): void {
     if (!this.socket) return;
 
     this.socket.send(JSON.stringify(data));
@@ -150,7 +150,7 @@ export class TypeSocket<T> {
    * Sends raw data over the socket.
    * @param data Raw data.
    */
-  sendRaw(data: WebSocketData) {
+  sendRaw(data: WebSocketData): void {
     if (!this.socket) return;
 
     this.socket.send(data);
@@ -159,7 +159,7 @@ export class TypeSocket<T> {
   /**
    * Ready state of the socket.
    */
-  get readyState() {
+  get readyState(): number {
     return this.socket ? this.socket.readyState : 0;
   }
 
@@ -195,7 +195,7 @@ export class TypeSocket<T> {
    * @param eventType Event type.
    * @param listener Listener function.
    */
-  on(eventType: keyof TypeSocketEvents<T>, listener: Function) {
+  on(eventType: keyof TypeSocketEvents<T>, listener: Function): void {
     this.events[eventType].add(listener as any);
   }
 
@@ -231,12 +231,12 @@ export class TypeSocket<T> {
    * @param eventType Event type.
    * @param listener Listener function.
    */
-  off(eventType: keyof TypeSocketEvents<T>, listener: Function) {
+  off(eventType: keyof TypeSocketEvents<T>, listener: Function): void {
     this.events[eventType].delete(listener as any);
   }
 
   private emit(eventType: keyof TypeSocketEvents<T>, ...args: any[]) {
-    for (let listener of this.events[eventType]) {
+    for (const listener of this.events[eventType]) {
       (listener as Function).apply(this, args);
     }
   }
