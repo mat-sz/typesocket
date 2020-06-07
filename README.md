@@ -1,6 +1,17 @@
-# TypeSocket
+<h1 align="center">TypeSocket</h1>
 
+<p align="center">
 TypeScript WebSocket wrapper with disconnection handling and JSON parsing.
+</p>
+
+<p align="center">
+<img alt="Travis (.com)" src="https://img.shields.io/travis/com/mat-sz/typesocket">
+<a href="https://npmjs.com/package/typesocket">
+<img alt="npm" src="https://img.shields.io/npm/v/typesocket">
+<img alt="npm" src="https://img.shields.io/npm/dw/typesocket">
+<img alt="NPM" src="https://img.shields.io/npm/l/typesocket">
+</a>
+</p>
 
 Used in [filedrop-web](https://github.com/mat-sz/filedrop-web) and [whiteboard-web](https://github.com/mat-sz/whiteboard-web).
 
