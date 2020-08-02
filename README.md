@@ -5,7 +5,7 @@ TypeScript WebSocket wrapper with disconnection handling and JSON parsing.
 </p>
 
 <p align="center">
-<img alt="Travis (.com)" src="https://img.shields.io/travis/com/mat-sz/typesocket">
+<img alt="workflow" src="https://img.shields.io/github/workflow/status/mat-sz/typesocket/Node.js%20CI%20(yarn)">
 <a href="https://npmjs.com/package/typesocket">
 <img alt="npm" src="https://img.shields.io/npm/v/typesocket">
 <img alt="npm" src="https://img.shields.io/npm/dw/typesocket">
