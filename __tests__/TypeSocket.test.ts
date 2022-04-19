@@ -6,7 +6,6 @@ function mockSocket() {
     socket: undefined,
   };
 
-  // @ts-ignore We're doing tests here, no need to listen to the error.
   global['WebSocket'] = class WebSocket {
     public readyState = 1;
     public onclose?: (e: CloseEvent) => void;
@@ -23,7 +22,7 @@ function mockSocket() {
     send(data: string) {
       references.lastMessage = data;
     }
-  };
+  } as any;
 
   return references;
 }
