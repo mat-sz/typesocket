@@ -13,6 +13,8 @@ TypeScript WebSocket wrapper with disconnection handling and JSON parsing.
 </a>
 </p>
 
+> **Are you a React.js user?** You might be interested in the [useTypeSocket](https://github.com/mat-sz/use-typesocket) React hook.
+
 Used in [filedrop-web](https://github.com/mat-sz/filedrop-web) and [whiteboard-web](https://github.com/mat-sz/whiteboard-web).
 
 API is **mostly** stable. It may change in the future, but the changes shouldn't be breaking.
