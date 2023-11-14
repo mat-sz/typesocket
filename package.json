@@ -2,8 +2,17 @@
   "name": "typesocket",
   "version": "1.0.2",
   "description": "TypeScript WebSockets library",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/cjs/index.js",
+      "import": "./lib/esm/index.js",
+      "types": "./lib/esm/index.d.ts"
+    }
+  },
+  "type": "module",
   "keywords": [
     "websockets",
     "library",
@@ -12,7 +21,9 @@
   "scripts": {
     "prepare": "npm run build",
     "test": "jest",
-    "build": "tsc",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:esm": "tsc --module esnext --outDir lib/esm && echo '{\"type\": \"module\"}' > lib/esm/package.json",
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs && echo '{\"type\": \"commonjs\"}' > lib/cjs/package.json",
     "lint": "eslint src"
   },
   "repository": {
