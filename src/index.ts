@@ -23,8 +23,6 @@ export interface TypeSocketOptions {
   retryTime?: number;
 }
 
-type WebSocketData = string | ArrayBuffer | Blob | ArrayBufferView;
-
 type TypeSocketConnectionStateChangeEventListener<T> = (
   this: TypeSocket<T>
 ) => void;
@@ -34,7 +32,11 @@ type TypeSocketMessageEventListener<T> = (
 ) => void;
 type TypeSocketRawMessageEventListener<T> = (
   this: TypeSocket<T>,
-  message: WebSocketData
+  message: string | ArrayBuffer
+) => void;
+type TypeSocketBinaryMessageEventListener<T> = (
+  this: TypeSocket<T>,
+  message: ArrayBuffer
 ) => void;
 
 interface TypeSocketEvents<T> {
@@ -44,6 +46,7 @@ interface TypeSocketEvents<T> {
   message: Set<TypeSocketMessageEventListener<T>>;
   invalidMessage: Set<TypeSocketRawMessageEventListener<T>>;
   rawMessage: Set<TypeSocketRawMessageEventListener<T>>;
+  binaryMessage: Set<TypeSocketBinaryMessageEventListener<T>>;
 }
 
 export class TypeSocket<T> {
@@ -64,6 +67,7 @@ export class TypeSocket<T> {
     message: new Set(),
     invalidMessage: new Set(),
     rawMessage: new Set(),
+    binaryMessage: new Set(),
   };
 
   /**
@@ -93,6 +97,7 @@ export class TypeSocket<T> {
     }
 
     this.socket = new WebSocket(this.url);
+    this.socket.binaryType = 'arraybuffer';
 
     this.socket.onopen = () => {
       this.connected();
@@ -150,7 +155,7 @@ export class TypeSocket<T> {
    * Sends raw data over the socket.
    * @param data Raw data.
    */
-  sendRaw(data: WebSocketData): void {
+  sendRaw(data: string | ArrayBuffer | Blob | ArrayBufferView): void {
     if (!this.socket) return;
 
     this.socket.send(data);
@@ -191,6 +196,16 @@ export class TypeSocket<T> {
   ): void;
 
   /**
+   * Adds a listener for a binary message event.
+   * @param eventType Event type. (binaryMessage)
+   * @param listener Listener function.
+   */
+  on(
+    eventType: 'binaryMessage',
+    listener: TypeSocketBinaryMessageEventListener<T>
+  ): void;
+
+  /**
    * Adds a listener for a given event.
    * @param eventType Event type.
    * @param listener Listener function.
@@ -224,6 +239,16 @@ export class TypeSocket<T> {
   off(
     eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected',
     listener: TypeSocketConnectionStateChangeEventListener<T>
+  ): void;
+
+  /**
+   * Removes a listener for a binary message event.
+   * @param eventType Event type. (binaryMessage)
+   * @param listener Listener function.
+   */
+  off(
+    eventType: 'binaryMessage',
+    listener: TypeSocketBinaryMessageEventListener<T>
   ): void;
 
   /**
@@ -280,7 +305,7 @@ export class TypeSocket<T> {
     this.emit('permanentlyDisconnected');
   }
 
-  private message(data: WebSocketData) {
+  private message(data: string | ArrayBuffer) {
     this.emit('rawMessage', data);
 
     if (typeof data === 'string') {
@@ -291,6 +316,8 @@ export class TypeSocket<T> {
           return;
         }
       } catch {}
+    } else if (data instanceof ArrayBuffer) {
+      this.emit('binaryMessage', data);
     }
 
     this.emit('invalidMessage', data);

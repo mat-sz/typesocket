@@ -127,23 +127,31 @@ The only argument contains an object of type `T` with a deserialized message.
 
 Emitted when an **invalid** message is received.
 
-The only argument contains an object of type `string | ArrayBuffer | Blob | ArrayBufferView` with a raw message.
+The only argument contains an object of type `string | ArrayBuffer` with a raw message.
 
 ### rawMessage
 
 Emitted when **any** message is received.
 
-The only argument contains an object of type `string | ArrayBuffer | Blob | ArrayBufferView` with a raw message.
+The only argument contains an object of type `string | ArrayBuffer` with a raw message.
+
+### binaryMessage
+
+Emitted when a binary message (with an ArrayBuffer) is received.
+
+The only argument contains an object of type `ArrayBuffer`.
 
 ## API
 
 ```
 on(eventType: 'message', listener: (message: T) => void);
-on(eventType: 'rawMessage' | 'invalidMessage', listener: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void);
+on(eventType: 'rawMessage' | 'invalidMessage', listener: (message: string | ArrayBuffer) => void);
+on(eventType: 'binaryMessage', listener: (message: ArrayBuffer) => void);
 on(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: () => void);
 
 off(eventType: 'message', listener: (message: T) => void);
-off(eventType: 'rawMessage' | 'invalidMessage', listener: (message: string | ArrayBuffer | Blob | ArrayBufferView) => void);
+off(eventType: 'rawMessage' | 'invalidMessage', listener: (message: string | ArrayBuffer) => void);
+on(eventType: 'binaryMessage', listener: (message: ArrayBuffer) => void);
 off(eventType: 'connected' | 'disconnected' | 'permanentlyDisconnected', listener: () => void);
 
 constructor(private url: string, options?: TypeSocketOptions);

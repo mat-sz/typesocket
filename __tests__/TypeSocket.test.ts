@@ -13,11 +13,13 @@ function mockSocket() {
     public onopen?: () => void;
     public onerror?: () => void;
 
-    constructor(url: string, protocols?: string | string[]) {
+    constructor() {
       references.socket = this;
     }
 
-    close() {}
+    close() {
+      //
+    }
 
     send(data: string) {
       references.lastMessage = data;
@@ -83,6 +85,27 @@ describe('TypeSocket', () => {
     });
 
     expect(fn).toHaveBeenCalledWith(data);
+  });
+
+  it('receives binary messages', () => {
+    const references = mockSocket();
+    const typesocket = new TypeSocket<MessageModel>('');
+
+    const fn = jest.fn();
+    const fnRaw = jest.fn();
+    const data = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    typesocket.on('binaryMessage', fn);
+    typesocket.on('rawMessage', fnRaw);
+
+    typesocket.connect();
+    references.socket?.onopen();
+    references.socket?.onmessage({
+      data,
+    });
+
+    expect(fn).toHaveBeenCalledWith(data);
+    expect(fnRaw).toHaveBeenCalledWith(data);
   });
 
   it('emits connection events', () => {
