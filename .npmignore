@@ -1,6 +1,6 @@
 src
 __tests__
-jest.config.js
+vitest.config.js
 yarn-error.log
 yarn.lock
 .prettierrc

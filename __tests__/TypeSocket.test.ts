@@ -52,8 +52,8 @@ describe('TypeSocket', () => {
     const references = mockSocket();
     const typesocket = new TypeSocket<MessageModel>('');
 
-    const fn = jest.fn();
-    const fnRaw = jest.fn();
+    const fn = vi.fn();
+    const fnRaw = vi.fn();
     const data = JSON.stringify({ type: 'test' });
 
     typesocket.on('message', fn);
@@ -73,7 +73,7 @@ describe('TypeSocket', () => {
     const references = mockSocket();
     const typesocket = new TypeSocket<MessageModel>('');
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     const data = 'invalid';
 
     typesocket.on('invalidMessage', fn);
@@ -91,8 +91,8 @@ describe('TypeSocket', () => {
     const references = mockSocket();
     const typesocket = new TypeSocket<MessageModel>('');
 
-    const fn = jest.fn();
-    const fnRaw = jest.fn();
+    const fn = vi.fn();
+    const fnRaw = vi.fn();
     const data = new Uint8Array([1, 2, 3, 4]).buffer;
 
     typesocket.on('binaryMessage', fn);
@@ -112,9 +112,9 @@ describe('TypeSocket', () => {
     const references = mockSocket();
     const typesocket = new TypeSocket<MessageModel>('');
 
-    const fnConnected = jest.fn();
-    const fnDisconnected = jest.fn();
-    const fnPermanentlyDisconnected = jest.fn();
+    const fnConnected = vi.fn();
+    const fnDisconnected = vi.fn();
+    const fnPermanentlyDisconnected = vi.fn();
 
     typesocket.on('connected', fnConnected);
     typesocket.on('disconnected', fnDisconnected);
