@@ -5,7 +5,7 @@ TypeScript WebSocket wrapper with disconnection handling and JSON parsing.
 </p>
 
 <p align="center">
-<img alt="workflow" src="https://img.shields.io/github/workflow/status/mat-sz/typesocket/Node.js%20CI%20(yarn)">
+<img alt="workflow" src="https://img.shields.io/github/actions/workflow/status/mat-sz/typesocket/node.js.yml?branch=master">
 <a href="https://npmjs.com/package/typesocket">
 <img alt="npm" src="https://img.shields.io/npm/v/typesocket">
 <img alt="npm" src="https://img.shields.io/npm/dw/typesocket">
@@ -65,13 +65,13 @@ export const socketMiddleware = (url: string) => {
     const socket = new TypeSocket<MessageModel>(url);
 
     socket.on('connected', () =>
-      store.dispatch({ type: ActionType.WS_CONNECTED })
+      store.dispatch({ type: ActionType.WS_CONNECTED }),
     );
     socket.on('disconnected', () =>
-      store.dispatch({ type: ActionType.WS_DISCONNECTED })
+      store.dispatch({ type: ActionType.WS_DISCONNECTED }),
     );
     socket.on('message', message =>
-      store.dispatch({ type: ActionType.WS_MESSAGE, value: message })
+      store.dispatch({ type: ActionType.WS_MESSAGE, value: message }),
     );
     socket.connect();
 
